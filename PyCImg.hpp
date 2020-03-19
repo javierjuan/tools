@@ -66,15 +66,19 @@ CImg<T> PyCImg::toCImg(const ndarray<T> &input)
     const int spectrum = info.ndim > 3 ? info.shape[3] : 1;
 
     CImg<T> output(width, height, depth, spectrum);
-    T *cimgPtr = output.data();
-    const T *pyPtr = (const T*) info.ptr;
-
-    #pragma omp parallel for
-    for (int i = 0; i < (int) output.size(); ++i)
+    auto unchecked_input = input.unchecked();
+#pragma omp parallel for
+    for (int x = 0; x < width; ++x)
     {
-        cimgPtr[i] = static_cast<T>(pyPtr[i]);
+        for (int y = 0; y < height; ++y)
+        {
+            for (int z = 0; z < depth; ++z)
+            {
+                for (int c = 0; c < spectrum; ++c)
+                    output(x, y, z, c) = unchecked_input(x, y, z, c);
+            }
+        }
     }
-
     return output;
 }
 
@@ -87,18 +91,25 @@ ndarray<T> PyCImg::toNumpy(const CImg<T> &input)
         return ndarray<T>();
     }
 
-    ndarray<T> output({input.width(), input.height(), input.depth(), input.spectrum()});
-    py::buffer_info info = output.request();
+    const int width = input.width();
+    const int height = input.height();
+    const int depth = input.depth();
+    const int spectrum = input.spectrum();
 
-    T *pyPtr = (T*) info.ptr;
-    const T *cimgPtr = input.data();
-
-    #pragma omp parallel for
-    for (int i = 0; i < (int) input.size(); ++i)
+    ndarray<T> output({width, height, depth, spectrum});
+    auto unchecked_output = output.mutable_unchecked();
+#pragma omp parallel for
+    for (int x = 0; x < width; ++x)
     {
-        pyPtr[i] = static_cast<T>(cimgPtr[i]);
+        for (int y = 0; y < height; ++y)
+        {
+            for (int z = 0; z < depth; ++z)
+            {
+                for (int c = 0; c < spectrum; ++c)
+                    unchecked_output(x, y, z, c) = input(x, y, z, c);
+            }
+        }
     }
-
     return output;
 }
 
