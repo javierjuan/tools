@@ -22,10 +22,10 @@
 #include <Distributions/MultivariateTStudent.hpp>
 #include <Distributions/Gamma.hpp>
 #include <MarkovRandomFields/MarkovRandomField.hpp>
-#include <MarkovRandomFields/FrequentistGaussianMarkovRandomField.hpp>
+#include <MarkovRandomFields/FrequentistGaussMarkovRandomField.hpp>
 #include <MarkovRandomFields/FrequentistTStudentMarkovRandomField.hpp>
 #include <MarkovRandomFields/FrequentistNonLocalMarkovRandomField.hpp>
-#include <MarkovRandomFields/BayesianGaussianMarkovRandomField.hpp>
+#include <MarkovRandomFields/BayesianGaussMarkovRandomField.hpp>
 #include <MarkovRandomFields/BayesianTStudentMarkovRandomField.hpp>
 #include <MarkovRandomFields/BayesianNonLocalMarkovRandomField.hpp>
 #include <PyCImg.hpp>
@@ -213,32 +213,32 @@ py::dict PySVFMM<MultivariateNormal, Dimensions>::toPython(const SpatiallyVarian
         mrf["connectivity"] = svfmm->spatialCoefficients().get()->connectivity();
         mrf["nodes"] = svfmm->spatialCoefficients().get()->nodes();
         mrf["classes"] = svfmm->spatialCoefficients().get()->classes();
-        mrf["model"] = model == MarkovRandomFieldBase::GAUSSIAN ? "gaussian" : (MarkovRandomFieldBase::TSTUDENT ? "tstudent" : "nonlocal");
+        mrf["model"] = model == MarkovRandomFieldBase::GAUSS ? "gaussian" : (MarkovRandomFieldBase::TSTUDENT ? "tstudent" : "nonlocal");
         mrf["tropism"] = tropism == MarkovRandomFieldBase::ISOTROPIC ? "isotropic" : "anisotropic";
         mrf["topology"] = topology == MarkovRandomFieldBase::ORTHOGONAL ? "orthogonal" : "complete";
         mrf["estimation"] = estimation == MarkovRandomFieldBase::FREQUENTIST ? "frequentist" : "bayesian";
         
         const MarkovRandomField<Dimensions> *ptr_ = svfmm->spatialCoefficients().get();
 
-        // Gaussian
-        if (model == MarkovRandomFieldBase::GAUSSIAN && tropism == MarkovRandomFieldBase::ISOTROPIC && estimation == MarkovRandomFieldBase::BAYESIAN)
+        // Gauss
+        if (model == MarkovRandomFieldBase::GAUSS && tropism == MarkovRandomFieldBase::ISOTROPIC && estimation == MarkovRandomFieldBase::BAYESIAN)
         {
-            const BayesianIsotropicGaussianMarkovRandomField<Dimensions> *ptr = static_cast<const BayesianIsotropicGaussianMarkovRandomField<Dimensions>*>(ptr_);
+            const BayesianIsotropicGaussMarkovRandomField<Dimensions> *ptr = static_cast<const BayesianIsotropicGaussMarkovRandomField<Dimensions>*>(ptr_);
             mrf["sigma"] = ptr->sigma();
         }
-        if (model == MarkovRandomFieldBase::GAUSSIAN && tropism == MarkovRandomFieldBase::ISOTROPIC && estimation == MarkovRandomFieldBase::FREQUENTIST)
+        if (model == MarkovRandomFieldBase::GAUSS && tropism == MarkovRandomFieldBase::ISOTROPIC && estimation == MarkovRandomFieldBase::FREQUENTIST)
         {
-            const FrequentistIsotropicGaussianMarkovRandomField<Dimensions> *ptr = static_cast<const FrequentistIsotropicGaussianMarkovRandomField<Dimensions>*>(ptr_);
+            const FrequentistIsotropicGaussMarkovRandomField<Dimensions> *ptr = static_cast<const FrequentistIsotropicGaussMarkovRandomField<Dimensions>*>(ptr_);
             mrf["sigma"] = ptr->sigma();
         }
-        if (model == MarkovRandomFieldBase::GAUSSIAN && tropism == MarkovRandomFieldBase::ANISOTROPIC && estimation == MarkovRandomFieldBase::BAYESIAN)
+        if (model == MarkovRandomFieldBase::GAUSS && tropism == MarkovRandomFieldBase::ANISOTROPIC && estimation == MarkovRandomFieldBase::BAYESIAN)
         {
-            const BayesianAnisotropicGaussianMarkovRandomField<Dimensions> *ptr = static_cast<const BayesianAnisotropicGaussianMarkovRandomField<Dimensions>*>(ptr_);
+            const BayesianAnisotropicGaussMarkovRandomField<Dimensions> *ptr = static_cast<const BayesianAnisotropicGaussMarkovRandomField<Dimensions>*>(ptr_);
             mrf["sigma"] = ptr->sigma();
         }
-        if (model == MarkovRandomFieldBase::GAUSSIAN && tropism == MarkovRandomFieldBase::ANISOTROPIC && estimation == MarkovRandomFieldBase::FREQUENTIST)
+        if (model == MarkovRandomFieldBase::GAUSS && tropism == MarkovRandomFieldBase::ANISOTROPIC && estimation == MarkovRandomFieldBase::FREQUENTIST)
         {
-            const FrequentistAnisotropicGaussianMarkovRandomField<Dimensions> *ptr = static_cast<const FrequentistAnisotropicGaussianMarkovRandomField<Dimensions>*>(ptr_);
+            const FrequentistAnisotropicGaussMarkovRandomField<Dimensions> *ptr = static_cast<const FrequentistAnisotropicGaussMarkovRandomField<Dimensions>*>(ptr_);
             mrf["sigma"] = ptr->sigma();
         }
         // T-student
