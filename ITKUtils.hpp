@@ -44,9 +44,9 @@ public:
     template<typename ImageType, typename ReferenceType>
     static typename ImageType::Pointer ChangeInformationImage(const typename ImageType::Pointer image, const typename ReferenceType::SpacingType spacing, const typename ReferenceType::PointType origin, const typename ReferenceType::DirectionType direction);
     template<typename ImageType, typename MaskType>
-    static typename MaskType::Pointer ZerosMask(const typename ImageType::Pointer image, const bool inverse = false);
+    static typename MaskType::Pointer ZerosMask(const typename ImageType::Pointer image, const bool inverse = false, const bool any = false, const double tolerance = -1);
     template<typename ImageType, typename MaskType>
-    static typename MaskType::Pointer ZerosMaskIntersect(const typename ImageType::Pointer image, const typename MaskType::Pointer mask, const bool inverse = false);
+    static typename MaskType::Pointer ZerosMaskIntersect(const typename ImageType::Pointer image, const typename MaskType::Pointer mask, const bool inverse = false, const bool any = false, const double tolerance = -1);
 };
 
 
@@ -236,7 +236,7 @@ typename ImageType::Pointer ITKUtils::ChangeInformationImage(const typename Imag
 
 
 template<typename ImageType, typename MaskType>
-typename MaskType::Pointer ITKUtils::ZerosMask(const typename ImageType::Pointer image, const bool inverse)
+typename MaskType::Pointer ITKUtils::ZerosMask(const typename ImageType::Pointer image, const bool inverse, const bool any, const double tolerance)
 {
     ITKUtils::AssertCompatibleImageAndMaskTypes<ImageType, MaskType>();
 
@@ -261,14 +261,22 @@ typename MaskType::Pointer ITKUtils::ZerosMask(const typename ImageType::Pointer
             iterator.Set(inverse ? value != 0 : value == 0);
         else
         {
-            bool flag = true;
+            bool flag = any;
+            unsigned int count = 0;
             for (int i = 0; i < imageSize[MaskDimension]; ++i)
             {
                 imageIndex[ImageDimension - 1] = i;
                 const typename ImageType::PixelType value = image->GetPixel(imageIndex);
-                flag = flag && (inverse ? value != 0 : value == 0);
-                if (!flag)
-                    break;
+                const bool condition = (inverse ? value != 0 : value == 0);
+                count += (unsigned int) condition;
+                if (tolerance > 0 && tolerance < 1)
+                    flag = ((double) count / (double) imageSize[MaskDimension]) >= (1.0 - tolerance);
+                else
+                {
+                    flag = any ? flag && condition : flag || condition;
+                    if (!flag)
+                        break;
+                }
             }
             iterator.Set(flag);
         }
@@ -279,12 +287,12 @@ typename MaskType::Pointer ITKUtils::ZerosMask(const typename ImageType::Pointer
 
 
 template<typename ImageType, typename MaskType>
-typename MaskType::Pointer ITKUtils::ZerosMaskIntersect(const typename ImageType::Pointer image, const typename MaskType::Pointer mask, const bool inverse)
+typename MaskType::Pointer ITKUtils::ZerosMaskIntersect(const typename ImageType::Pointer image, const typename MaskType::Pointer mask, const bool inverse, const bool any, const double tolerance)
 {
     using MaskFilterType = itk::MaskImageFilter<MaskType, MaskType>;
 
     typename MaskFilterType::Pointer maskFilter = MaskFilterType::New();
-    maskFilter->SetInput(ITKUtils::ZerosMask<ImageType, MaskType>(image, inverse));
+    maskFilter->SetInput(ITKUtils::ZerosMask<ImageType, MaskType>(image, inverse, any, tolerance));
     maskFilter->SetMaskImage(mask);
     maskFilter->Update();
     return maskFilter->GetOutput();
