@@ -78,7 +78,9 @@ public:
     template<class Derived>
     static VectorXd mad(const DenseBase<Derived> &x, const Dimension dimension = Math::COLUMNS);
     template<class Derived>
-    static VectorXd percentile(const DenseBase<Derived> &x, const double p, VectorXi &indices = VectorXi(), const Dimension dimension = Math::COLUMNS);
+    static VectorXd percentile(const DenseBase<Derived> &x, const double p, const Dimension dimension = Math::COLUMNS);
+    template<class Derived>
+    static VectorXd percentile(const DenseBase<Derived> &x, const double p, VectorXi &indices, const Dimension dimension = Math::COLUMNS);
     // Discrete integral and derivatives
     template<class Derived1, class Derived2>
     static VectorXd integral(const DenseBase<Derived1> &x, const DenseBase<Derived2> &y, const Dimension dimension = Math::COLUMNS);
@@ -379,6 +381,13 @@ double _percentile(const DenseBase<Derived> &x, const double p, int &index)
     
     // By interpolation. MATLAB procedure.
     return (double) ((0.5 - r) * (double) y(kp1)) + ((0.5 + r) * (double) y(k));
+}
+
+template<class Derived>
+VectorXd Math::percentile(const DenseBase<Derived> &x, const double p, const Dimension dimension)
+{
+    VectorXi indices;
+    return Math::percentile(x, p, indices, dimension);
 }
 
 template<class Derived>
