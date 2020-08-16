@@ -23,16 +23,21 @@ class CImgUtils
 {
 public:
     template <typename T>
-    static CImg<bool> ZerosMask(const CImg<T> &image);
+    static CImg<bool> ZerosMask(const CImg<T> &image, const bool inverse = false, const double tolerance = 0);
     template <typename T>
-    static CImg<bool> NonZerosMask(const CImg<T> &image);
-    template <typename T>
-    static CImg<bool> NonZerosMaskIntersect(const CImg<T> &image, const CImg<bool> &mask);
+    static CImg<bool> ZerosMaskIntersect(const CImg<T> &image, const CImg<bool> &mask, const bool inverse = false, const double tolerance = 0);
 };
 
 template <typename T>
-CImg<bool> CImgUtils::ZerosMask(const CImg<T> &image)
+CImg<bool> CImgUtils::ZerosMask(const CImg<T> &image, const bool inverse, const double tolerance)
 {
+    if (tolerance < 0 || tolerance > 1)
+    {
+        std::stringstream s;
+        s << "In function: " << __func__ << " ==> Unexpected value for <tolerance>. It must be in the range [0,1]" << std::endl;
+        throw std::runtime_error(s.str());
+    }
+
     CImg<bool> mask(image.width(), image.height(), image.depth());
     #pragma omp parallel for
     for (int x = 0; x < image.width(); ++x)
@@ -41,9 +46,16 @@ CImg<bool> CImgUtils::ZerosMask(const CImg<T> &image)
         {
             for (int z = 0; z < image.depth(); ++z)
             {
-                bool flag = true;
+                int count = 0;
+                bool flag = false;
                 for (int c = 0; c < image.spectrum(); ++c)
-                    flag = flag && (image(x, y, z, c) == 0);
+                {
+                    const bool condition = (inverse ? image(x, y, z) != 0 : image(x, y, z) == 0);
+                    count += (int) condition;
+                    flag = ((double) count / (double) image.spectrum()) >= (1.0 - tolerance);
+                    if (flag)
+                        break;
+                }
                 mask(x, y, z) = flag;
             }
         }
@@ -52,28 +64,7 @@ CImg<bool> CImgUtils::ZerosMask(const CImg<T> &image)
 }
 
 template <typename T>
-CImg<bool> CImgUtils::NonZerosMask(const CImg<T> &image)
-{
-    CImg<bool> mask(image.width(), image.height(), image.depth());
-    #pragma omp parallel for
-    for (int x = 0; x < image.width(); ++x)
-    {
-        for (int y = 0; y < image.height(); ++y)
-        {
-            for (int z = 0; z < image.depth(); ++z)
-            {
-                bool flag = true;
-                for (int c = 0; c < image.spectrum(); ++c)
-                    flag = flag && (image(x, y, z, c) != 0);
-                mask(x, y, z) = flag;
-            }
-        }
-    }
-    return mask;
-}
-
-template <typename T>
-CImg<bool> CImgUtils::NonZerosMaskIntersect(const CImg<T> &image, const CImg<bool> &mask)
+CImg<bool> CImgUtils::ZerosMaskIntersect(const CImg<T> &image, const CImg<bool> &mask, const bool inverse, const double tolerance)
 {
     if (!image.is_sameXYZ(mask))
     {
@@ -94,9 +85,16 @@ CImg<bool> CImgUtils::NonZerosMaskIntersect(const CImg<T> &image, const CImg<boo
                     maskIntersect(x, y, z) = false;
                 else
                 {
-                    bool flag = true;
+                    int count = 0;
+                    bool flag = false;
                     for (int c = 0; c < image.spectrum(); ++c)
-                        flag = flag && image(x, y, z, c) != 0;
+                    {
+                        const bool condition = (inverse ? image(x, y, z) != 0 : image(x, y, z) == 0);
+                        count += (int) condition;
+                        flag = ((double) count / (double) image.spectrum()) >= (1.0 - tolerance);
+                        if (flag)
+                            break;
+                    }
                     maskIntersect(x, y, z) = flag;
                 }
             }
