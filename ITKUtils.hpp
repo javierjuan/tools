@@ -293,6 +293,8 @@ typename MaskType::Pointer ITKUtils::ZerosMaskIntersect(const typename ImageType
 
     typename MaskFilterType::Pointer maskFilter = MaskFilterType::New();
     maskFilter->SetInput(ITKUtils::ZerosMask<ImageType, MaskType>(image, inverse, any, tolerance));
+    maskFilter->SetCoordinateTolerance(1e-4);
+    maskFilter->SetDirectionTolerance(1e-4);
     maskFilter->SetMaskImage(mask);
     maskFilter->Update();
     return maskFilter->GetOutput();
