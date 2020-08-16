@@ -41,7 +41,7 @@ CImg<T> PyCImg::toCImg(const ndarray<T> &input)
 {
     py::buffer_info info = input.request();
 
-    if (info.ndim == 1 and info.shape[0] == 0)
+    if (info.ndim == 0 || (info.ndim == 1 && info.shape[0] == 0))
     {
         return CImg<T>();
     }
@@ -53,7 +53,7 @@ CImg<T> PyCImg::toCImg(const ndarray<T> &input)
         throw std::runtime_error(s.str());
     }
     
-    if (info.ndim < 2 or info.ndim > 4)
+    if (info.ndim < 2 || info.ndim > 4)
     {
         std::stringstream s;
         s << "In function " << __PRETTY_FUNCTION__ << " ==> Incompatible buffer dimension: expected a 2D, 3D or 4D array" << std::endl;
