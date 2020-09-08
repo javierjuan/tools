@@ -92,6 +92,8 @@ public:
     static double mad(const DenseBase<Derived>& x);
     template<typename Derived>
     static double percentile(const DenseBase<Derived>& x, const double p);
+    template<typename Derived>
+    static double percentile(const DenseBase<Derived>& x, const double p, int& index);
     // Linspace
     template<typename T>
     static VectorXd linspace(const T minx, const T maxx, const int N = 100);
@@ -249,6 +251,13 @@ double Math::mad(const DenseBase<Derived>& x)
 template<typename Derived>
 double Math::percentile(const DenseBase<Derived>& x, const double p)
 {
+    int index = 0;
+    return Math::percentile(x, p, index);
+}
+
+template<typename Derived>
+double Math::percentile(const DenseBase<Derived>& x, const double p, int& index)
+{
     if (p < 0 || p > 100)
     {
         std::stringstream s;
@@ -259,10 +268,12 @@ double Math::percentile(const DenseBase<Derived>& x, const double p)
     if (x.size() == 1)
         return (double) x(0);
 
-    const typename Derived::PlainObject& y = Math::sort(x);
+    VectorXi indices;
+    const typename Derived::PlainObject& y = Math::sort(x, indices);
     
     if (p == 50)
     {
+        index = indices((int) (y.size() / 2));
         if (((int) y.size() % 2) == 0)
             return (double) (y((Index) (y.size() / 2)) + y((Index)(y.size() / 2) - 1)) / 2.0;
         else
@@ -274,6 +285,9 @@ double Math::percentile(const DenseBase<Derived>& x, const double p)
     const int k = (int) std::floor(r);
     const int kp1 = k + 1 >= (int) y.size() ? (int) y.size() - 1 : k + 1;
     r = r - k;
+
+    // Set index
+    index = indices(k);
 
     // By interpolation
     return r == 0 ? (double) y(k) : (r * (double) y(kp1)) + ((1.0 - r) * (double) y(k));
